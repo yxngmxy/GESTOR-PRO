@@ -237,13 +237,24 @@ src/
 
 ---
 
+
 ## 8. Conclusiones
 
-- **¿Qué se aprendió?**  
-  [Escribir aprendizajes del equipo sobre el diseño y los patrones]
+### **¿Qué se aprendió?**
+- Un patrón tiene sentido cuando hay un problema real detrás. Los que más se notaron fueron Command (deshacer sale casi gratis una vez que cada acción es un objeto) y State (ya que las reglas quedaron separadas y claras).
+- Separar el núcleo de las interfaces nos ahorró trabajo: la GUI y la consola se escribieron con poco código porque la lógica ya estaba hecha.
+- Inyectar dependencias, como el reloj, hace que las pruebas sean rápidas y fiables.
+Los patrones se combinan: un cambio de estado es un Command, que usa State y publica un evento de Observer.
 
-- **¿Qué se cambiaría del diseño?**  
-  [Escribir mejoras que harían en una futura versión]
+### **¿Qué cambiaríamos?**  
+- La persistencia. Hoy todo se pierde al cerrar, entonces nosotros guardaríamos proyectos, tareas y plantillas en un archivo (por ejemplo JSON) o en una base de datos.
+- Estado como enum más datos. Si los estados necesitaran información propia, habría que dejar de usar singletons.
+- El proyecto usa una CompositeTask raíz con id 0 para reutilizar el Composite. Funciona, pero es un atajo,  un diseño más limpio separaría el contenedor.
+- Cambiariamos las alertas. Cambiaríamos el polling por un planificador (ScheduledExecutorService) y guardaríamos los avisos ya enviados.
+- TaskManager demasiado grande, lo dividiríamos en servicios más pequeños (proyectos, tareas, plantillas).
+- El límite del historial. Pondríamos un máximo de acciones deshacibles.
+- Permitiríamos ordenar por varios criterios a la vez.
+- Interfaz Task más pequeña. Separar lo que solo necesitan los grupos para respetar mejor el principio de segregación de interfaces.
 
 ---
 
