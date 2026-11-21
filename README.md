@@ -222,7 +222,15 @@ src/
 
 ### Ejecutar versión por Consola
 ```bash
-# Pegar aquí el comando para compilar y correr la consola
+proyecto <nombre> | proyectos | usar <id|nombre>
+nueva <título> [grupo] [en=ID] [prioridad=ALTA] [fecha=2026-12-31] [resp=ana,luis]
+listar [orden=prioridad|fecha|responsable] [desc] [estado=..] [resp=..] [prioridad=..] [vencidas] [texto=..] [plano]
+ver <id> | estado <id> <estado> | prioridad <id> <p> | fecha <id> <f|ninguna>
+resp <id> <a,b> | renombrar <id> <título> | eliminar <id>
+deshacer | rehacer | alertas | bandeja [usuario]
+plantilla guardar <nombre> <idTarea> | plantilla guardar-proyecto <nombre>
+plantilla usar <nombre> [en=ID] [fecha=..] | plantilla usar-proyecto <plantilla> <nuevo> [fecha=..] | plantillas
+ayuda | salir
 ```
 
 ### Ejecutar versión con Interfaz Gráfica (GUI)
