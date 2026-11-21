@@ -1,8 +1,8 @@
 # Gestor de Tareas y Proyectos (Propuesta 2) - GESTOR PRO
 
 ### **Asignatura:** Ingeniería de Software II - Parcial de Patrones de Diseño  
-### **Lenguaje:** Java
-### **Integrantes:**  
+#### **Lenguaje:** Java
+#### **Integrantes:**  
 - David Andres Fajardo Briceño
 - Charlotte Samantha García Galindo 
 
