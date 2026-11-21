@@ -317,6 +317,316 @@ Los patrones se combinan: un cambio de estado es un Command, que usa State y pub
 
 ### 6.4 Diagrama de Secuencia
 
+### 6.1 Diagrama de Casos de Uso
+
+```mermaid
+flowchart LR
+    U(["Usuario"])
+    R(["Responsable de tarea"])
+    subgraph SIS["Gestor de tareas y proyectos"]
+        direction TB
+        C1(["Crear proyecto"])
+        C2(["Crear tarea simple o compuesta"])
+        C3(["Cambiar estado de una tarea"])
+        C4(["Editar prioridad, fecha y responsables"])
+        C5(["Eliminar tarea"])
+        C6(["Deshacer / rehacer"])
+        C7(["Ordenar y filtrar tareas"])
+        C8(["Guardar plantilla"])
+        C9(["Crear desde plantilla"])
+        C10(["Revisar alertas de fecha límite"])
+        C11(["Recibir aviso"])
+    end
+    U --> C1
+    U --> C2
+    U --> C3
+    U --> C4
+    U --> C5
+    U --> C6
+    U --> C7
+    U --> C8
+    U --> C9
+    U --> C10
+    C10 -.->|"genera"| C11
+    C3 -.->|"genera"| C11
+    R --> C11
+```
+
+### 6.2 Diagrama de Clases General
+
+```mermaid
+classDiagram
+    direction LR
+    class ConsoleApp
+    class GuiApp
+    class TaskManager {
+        +createProject(name) Project
+        +addTask(project, parent, title, composite) Task
+        +changeStatus(task, target)
+        +setPriority(task, p)
+        +assign(task, people)
+        +remove(task)
+        +undo()
+        +redo()
+        +checkDeadlines()
+    }
+    class CommandHistory
+    class EventPublisher
+    class DeadlineChecker
+    class TemplateRegistry
+    class TaskQuery
+    class Project
+    class Task {
+        <<abstract>>
+        +progress() double
+        +moveTo(target)
+        +deepCopy(ids) Task
+    }
+    class SimpleTask
+    class CompositeTask
+    class TaskState {
+        <<abstract>>
+        +transitionTo(target, ctx) TaskState
+    }
+
+    ConsoleApp --> TaskManager
+    GuiApp --> TaskManager
+    GuiApp --> TaskQuery
+    ConsoleApp --> TaskQuery
+    TaskManager --> CommandHistory
+    TaskManager --> EventPublisher
+    TaskManager --> DeadlineChecker
+    TaskManager --> TemplateRegistry
+    TaskManager "1" o-- "*" Project
+    Project --> CompositeTask : raíz
+    Task <|-- SimpleTask
+    Task <|-- CompositeTask
+    CompositeTask o-- "*" Task : children
+    Task --> TaskState
+```
+
+### 6.3 Diagramas de Clases por Patrón
+
+#### Patrón 1 - Composite
+
+```mermaid
+classDiagram
+    class Task {
+        <<abstract>>
+        +id() int
+        +title() String
+        +progress() double
+        +children() List~Task~
+        +deepCopy(ids) Task
+    }
+    class SimpleTask {
+        +progress() double
+    }
+    class CompositeTask {
+        -children List~Task~
+        +add(child)
+        +remove(child)
+        +progress() double
+    }
+    Task <|-- SimpleTask
+    Task <|-- CompositeTask
+    CompositeTask o-- "*" Task
+```
+
+#### Patrón 2 - State
+
+```mermaid
+classDiagram
+    class Task {
+        -state TaskState
+        +moveTo(target)
+    }
+    class StateContext {
+        <<interface>>
+        +describe() String
+        +allChildrenDone() boolean
+    }
+    class TaskState {
+        <<abstract>>
+        +transitionTo(target, ctx) TaskState
+        #guard(target, ctx)
+    }
+    class PendingState
+    class InProgressState
+    class InReviewState
+    class DoneState
+    Task ..|> StateContext
+    Task --> TaskState
+    TaskState <|-- PendingState
+    TaskState <|-- InProgressState
+    TaskState <|-- InReviewState
+    TaskState <|-- DoneState
+    TaskState ..> StateContext
+```
+
+#### Patrón 3 - Command
+
+```mermaid
+classDiagram
+    class Command {
+        <<interface>>
+        +execute()
+        +undo()
+        +description() String
+    }
+    class CommandHistory {
+        -undoStack
+        -redoStack
+        +execute(c)
+        +undo()
+        +redo()
+    }
+    class AddTaskCommand
+    class RemoveTaskCommand
+    class ChangeStatusCommand
+    class AssignCommand
+    class PropertyChangeCommand~T~
+    class AddProjectCommand
+    class TaskManager
+    Command <|.. AddTaskCommand
+    Command <|.. RemoveTaskCommand
+    Command <|.. ChangeStatusCommand
+    Command <|.. AssignCommand
+    Command <|.. PropertyChangeCommand
+    Command <|.. AddProjectCommand
+    CommandHistory o-- "*" Command
+    TaskManager --> CommandHistory
+    TaskManager ..> Command : crea
+```
+
+#### Patrón 4 - Observer
+
+```mermaid
+classDiagram
+    class EventPublisher {
+        +subscribe(l)
+        +unsubscribe(l)
+        +publish(event)
+        +emit(type, task, recipients, msg)
+    }
+    class TaskListener {
+        <<interface>>
+        +onEvent(event)
+    }
+    class UserInbox
+    class ConsoleNotifier
+    class GuiListener["Listener de GuiApp"]
+    class DeadlineChecker {
+        +check(projects) List~TaskEvent~
+    }
+    class TaskEvent {
+        <<record>>
+        type
+        task
+        recipients
+        message
+    }
+    EventPublisher o-- "*" TaskListener
+    TaskListener <|.. UserInbox
+    TaskListener <|.. ConsoleNotifier
+    TaskListener <|.. GuiListener
+    DeadlineChecker --> EventPublisher
+    EventPublisher ..> TaskEvent
+```
+
+#### Patrón 5 - Prototype
+
+```mermaid
+classDiagram
+    class Task {
+        <<abstract>>
+        +deepCopy(ids) Task
+    }
+    class SimpleTask {
+        +deepCopy(ids) Task
+    }
+    class CompositeTask {
+        +deepCopy(ids) Task
+    }
+    class Project {
+        +deepCopy(ids, projectId, name) Project
+    }
+    class TemplateRegistry {
+        +saveTask(name, task)
+        +instantiateTask(name, newDue) Task
+        +saveProject(name, project)
+        +instantiateProject(name, newName, start) Project
+    }
+    Task <|-- SimpleTask
+    Task <|-- CompositeTask
+    TemplateRegistry o-- "*" Task : plantillas
+    TemplateRegistry o-- "*" Project : plantillas
+```
+
+#### Patrón 6 - Strategy
+
+```mermaid
+classDiagram
+    class SortStrategy {
+        <<interface>>
+        +compare(a, b) int
+        +name() String
+    }
+    class PrioritySort
+    class DueDateSort
+    class AssigneeSort
+    class NoSort
+    class TaskQuery {
+        +where(predicate) TaskQuery
+        +sortedBy(strategy) TaskQuery
+        +select(siblings) List~Task~
+    }
+    class SortStrategies {
+        +all() List
+        +byName(name) SortStrategy
+    }
+    SortStrategy <|.. PrioritySort
+    SortStrategy <|.. DueDateSort
+    SortStrategy <|.. AssigneeSort
+    SortStrategy <|.. NoSort
+    TaskQuery --> SortStrategy
+    SortStrategies ..> SortStrategy
+```
+
+### 6.4 Diagrama de Secuencia
+
+Cambiar el estado de una tarea desde la GUI (la consola sigue el mismo camino a partir de `TaskManager`):
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant G as GuiApp
+    participant M as TaskManager
+    participant H as CommandHistory
+    participant C as ChangeStatusCommand
+    participant T as Task
+    participant S as TaskState
+    participant P as EventPublisher
+    participant I as UserInbox
+
+    U->>G: elige "En curso" y pulsa Aplicar
+    G->>M: changeStatus(tarea, IN_PROGRESS)
+    M->>H: execute(new ChangeStatusCommand)
+    H->>C: execute()
+    C->>T: moveTo(IN_PROGRESS)
+    T->>S: transitionTo(IN_PROGRESS, this)
+    alt transición permitida
+        S-->>T: nuevo estado
+        C->>P: emit(STATUS_CHANGED, tarea, responsables, mensaje)
+        P->>I: onEvent(evento)
+        H->>H: apila el comando en undoStack
+        G->>G: refresh()
+    else transición no permitida
+        S-->>T: lanza InvalidTransitionException
+        T-->>G: el error llega hasta la GUI
+        G->>U: muestra el mensaje (no se registra en el historial)
+    end
+```
 
 ---
 
