@@ -61,34 +61,19 @@ Si programáramos este gestor de forma directa y sin aplicar patrones, nos encon
    
 ---
 
-## 4. Arquitectura General
-
-### Separación de capas
-- **Lógica de negocio (`modelo` / `patrones`):** [Explicar qué contiene y cómo se mantiene independiente]
-- **Capa de servicio (`servicio`):** [Explicar cómo coordina la lógica]
-- **Interfaz de consola (`vista.consola`):** [Explicar cómo se conecta al núcleo]
-- **Interfaz gráfica (`vista.gui`):** [Explicar cómo se conecta al mismo núcleo]
-
-### Estructura de paquetes del repositorio
-```text
-src/
-├── main/
-│   └── java/
-│       └── com/gestor/
-│           ├── modelo/
-│           ├── patrones/
-│           ├── servicio/
-│           └── vista/
-│               ├── consola/
-│               └── gui/
-└── test/
-    └── java/
-        └── com/gestor/
-```
-
----
-
 ## 3. Patrones de Diseño Aplicados
+
+Resumen de lo que usamos:
+
+| Patrón | Categoría | Problema que resuelve |
+| :--- | :--- | :--- |
+| 3.1 Composite | Estructural | Tareas simples y compuestas tratadas igual |
+| 3.2 State | Comportamiento | Transiciones de estado permitidas |
+| 3.3 Command | Comportamiento | Deshacer y rehacer |
+| 3.4 Observer | Comportamiento | Avisos a varios responsables y canales |
+| 3.5 Prototype | Creacional | Plantillas de tareas y proyectos recurrentes |
+| 3.6 Strategy | Comportamiento | Ordenar con criterios intercambiables |
+| 3.7 Facade (apoyo) | Estructural | Una sola entrada al núcleo para consola y GUI |
 
 ### 3.1 Patrón Composite (Estructural)
 
@@ -151,7 +136,51 @@ src/
 
 ---
 
-### 3.4 Patrón Strategy (Comportamiento)
+### 3.4 Patrón Observer (Comportamiento)
+
+- **Problema concreto:** Cuando se acerca una fecha límite, cambia un estado o se asigna una tarea, hay que avisar a **uno o varios responsables** y por distintos canales (consola, panel de la GUI, bandeja por usuario). El núcleo no debía conocer la consola ni Swing.
+- **Descripción con palabras propias:** Observer establece una relación de uno a muchos: un objeto publica eventos y muchos otros se suscriben para recibirlos. El que publica no sabe quiénes lo escuchan ni qué hacen con el aviso.
+- **Correspondencia de roles y clases:**
+
+| Rol del Patrón | Clase / Interfaz en el Proyecto | Responsabilidad |
+| :--- | :--- | :--- |
+| **Subject** | `EventPublisher` | Mantiene la lista de suscriptores (`subscribe`, `unsubscribe`) y reparte cada evento (`publish`, `emit`). Si un observador falla, no afecta a los demás. |
+| **Observer** | `TaskListener` | Interfaz con `onEvent(TaskEvent)`. |
+| **ConcreteObserver** | `UserInbox`, `ConsoleNotifier`, y el listener de la GUI | Guardan avisos por usuario, los imprimen en consola o los muestran en el panel de avisos. |
+| **Evento** | `TaskEvent`, `EventType` | Llevan tipo, tarea, **destinatarios**, mensaje y hora. |
+| **Quien dispara** | Los comandos y `DeadlineChecker` | Publican creación, cambio de estado, asignación, `DUE_SOON` y `OVERDUE`. |
+
+  `DeadlineChecker` recibe un `Clock` por constructor, por lo que en las pruebas se "avanza el tiempo" sin esperar, y recuerda qué avisos ya envió para no repetirlos.
+- **Alternativa considerada y por qué se descartó:** Que el código que detecta la fecha límite llame directamente a `System.out.println` o a un método de la GUI. Se descartó porque ataría el núcleo a una interfaz concreta y habría que duplicar código para la otra. También se pensó en un hilo con temporizador por cada tarea, pero es más difícil de probar y de controlar.
+- **Ventajas, desventajas y relación con SOLID:**
+  - *Ventajas:* Un canal nuevo (correo, archivo) es una clase que se suscribe; el núcleo no conoce las interfaces; se prueba fácil con el reloj inyectado.
+  - *Desventajas:* Las notificaciones son síncronas (un observador lento retrasa la acción); la revisión de fechas es por *polling* (la GUI revisa cada 30 segundos y la consola con `alertas`); los avisos ya enviados se recuerdan solo en memoria; es más difícil seguir el flujo de ejecución.
+  - *Relación con SOLID:* **OCP** (nuevos canales sin cambiar al sujeto), **DIP** (el sujeto depende de `TaskListener`) y **SRP** (detectar fechas, repartir eventos y mostrarlos son tareas separadas).
+
+---
+
+### 3.5 Patrón Prototype (Creacional)
+
+- **Problema concreto:** Hay trabajo que se repite (un sprint, el cierre mensual). Queríamos guardar un modelo con todas sus subtareas, prioridades y responsables y crear copias nuevas cada vez, sin que la copia comparta nada con el modelo.
+- **Descripción con palabras propias:** Prototype crea objetos nuevos **copiando uno que ya existe** en lugar de armarlos desde cero. Aquí la copia es profunda: se copia también todo el árbol de subtareas.
+- **Correspondencia de roles y clases:**
+
+| Rol del Patrón | Clase / Interfaz en el Proyecto | Responsabilidad |
+| :--- | :--- | :--- |
+| **Prototype** | `Task` (método abstracto `deepCopy(IdGenerator)`) | Declara cómo se copia una tarea. |
+| **ConcretePrototype** | `SimpleTask`, `CompositeTask` (copia también a cada hijo), `Project` | Cada clase copia sus propios datos. La copia recibe ids nuevos y empieza siempre en Pendiente. |
+| **Registro de prototipos** | `TemplateRegistry` | Guarda copias con nombre (`saveTask`, `saveProject`) y entrega copias nuevas (`instantiateTask`, `instantiateProject`). Puede desplazar todas las fechas en bloque. |
+| **Client** | `TaskManager` | `addTaskFromTemplate` y `createProjectFromTemplate` insertan la copia mediante un comando, por lo que se puede deshacer. |
+
+- **Alternativa considerada y por qué se descartó:** Un Builder o un método fábrica del tipo "crear sprint" que arme las tareas desde código. Se descartó porque las plantillas quedarían fijas en el programa y el usuario no podría crear las suyas. Con Prototype, cualquier tarea o proyecto que el usuario arme puede ser plantilla.
+- **Ventajas, desventajas y relación con SOLID:**
+  - *Ventajas:* El usuario crea plantillas sin programar; la copia es independiente del modelo; la lógica de copia está en la clase que conoce sus datos.
+  - *Desventajas:* Hay que mantener `deepCopy` al día si se agregan atributos a `Task` (por eso existe `copyAttributesTo`, pero depende de que alguien lo recuerde); las plantillas no se guardan en disco; los ids de las plantillas consumen números de la secuencia.
+  - *Relación con SOLID:* **OCP** (un nuevo tipo de tarea implementa su `deepCopy` sin cambiar el registro) y **SRP** (el registro solo guarda y entrega, no sabe copiar). Punto débil: `Project` no comparte interfaz con `Task`, por lo que el registro usa dos mapas.
+
+---
+
+### 3.6 Patrón Strategy (Comportamiento)
 
 - **Problema concreto:** El sistema debe permitir ordenar y filtrar las tareas por distintos criterios (prioridad, fecha límite o responsable) y estar preparado para añadir criterios nuevos fácilmente.
 - **Descripción con palabras propias:** Strategy consiste en encapsular diferentes formas de hacer una misma tarea (en nuestro caso, ordenar o filtrar una lista) dentro de clases intercambiables. Así el gestor principal no tiene quemada una única forma de ordenar, sino que recibe la estrategia que el usuario escoja en ese momento y la aplica sobre las tareas.
@@ -168,27 +197,104 @@ src/
   - *Ventajas:* Permite cambiar el criterio de ordenamiento o filtrado en tiempo de ejecución desde un combo box en Swing o una opción en consola, y facilita agregar criterios nuevos en segundos.
   - *Desventajas:* El cliente o controlador debe conocer qué estrategias existen para instanciar la correcta según la selección del usuario.
   - *Relación con SOLID:* Cumple con **Abierto/Cerrado (OCP)** al permitir añadir nuevas estrategias sin tocar el gestor, y con **Inversión de Dependencias (DIP)** porque `GestorTareasService` depende de la abstracción `EstrategiaOrden` y no de implementaciones concretas.
+
 ---
 
-### 5.2 Patrón 2: [Nombre del Patrón] ([Categoría])
-- **Problema concreto:** [Qué problema del proyecto motivó su uso]
-- **Descripción con palabras propias:** [Explicación sencilla de cómo funciona el patrón]
+### 3.7 Patrón Facade (de apoyo, Estructural)
+
+- **Problema concreto:** La consola y la GUI necesitan coordinar proyectos, comandos, eventos, plantillas y alertas. Si cada interfaz hablara con todas esas clases, la lógica se repetiría.
+- **Descripción con palabras propias:** Facade ofrece una sola clase sencilla que esconde el trabajo conjunto de muchas otras.
 - **Correspondencia de roles y clases:**
 
 | Rol del Patrón | Clase / Interfaz en el Proyecto | Responsabilidad |
 | :--- | :--- | :--- |
-| [Rol 1] | `[NombreClase]` | [Qué hace] |
-| [Rol 2] | `[NombreClase]` | [Qué hace] |
-| [Rol 3] | `[NombreClase]` | [Qué hace] |
+| **Facade** | `TaskManager` | Recibe peticiones como `changeStatus(task, target)`, crea el comando, lo ejecuta en el historial y deja la acción deshacible y notificada. |
+| **Subsistema** | `CommandHistory`, `EventPublisher`, `DeadlineChecker`, `TemplateRegistry`, `Project` | Clases internas que coordina. |
+| **Client** | `ConsoleApp`, `GuiApp` | Solo conocen a `TaskManager`. |
 
-- **Alternativa considerada y por qué se descartó:** [Qué otra opción se pensó y por qué no convenía]
+- **Alternativa considerada y por qué se descartó:** Que cada interfaz use directamente todas las clases del núcleo. Se descartó por duplicar lógica y acoplar las interfaces al núcleo.
 - **Ventajas, desventajas y relación con SOLID:**
-  - *Ventajas:* [Escribir aquí]
-  - *Desventajas:* [Escribir aquí]
-  - *Principios SOLID:* [Qué principios cumple y por qué]
+  - *Ventajas:* Un único punto de entrada; consola y GUI son capas finas.
+  - *Desventajas:* `TaskManager` tiende a crecer y habría que dividirlo si el proyecto aumentara.
+  - *Relación con SOLID:* **DIP** (las interfaces dependen de una sola clase del núcleo).
 
 ---
 
+## 4. Arquitectura General
+
+### Separación de capas
+
+- **Lógica de negocio (`core.model`, `core.state`, `core.command`, `core.notify`, `core.template`, `core.query`):** Contiene las reglas del problema: las tareas y proyectos (Composite), los estados y sus transiciones (State), las acciones deshacibles (Command), los eventos y alertas (Observer), las plantillas (Prototype) y los criterios de orden y filtro (Strategy). Se mantiene independiente porque **no importa nada de `cli` ni de `gui`** (ni `System.out`, ni Swing). Incluso `core.state` no depende de `core.model`, porque usa la interfaz `StateContext`, y el tiempo entra por un `Clock` inyectado, lo que permite probarla sin interfaz y sin esperar.
+- **Capa de servicio (`core.service`):** `TaskManager` es la fachada. Crea los comandos, los ejecuta en el historial, administra proyectos, plantillas y alertas, y es el único punto de entrada al núcleo. Así las reglas (por ejemplo, "esta acción se puede deshacer y avisa a los responsables") se aplican siempre igual, sin importar desde qué interfaz se use.
+- **Interfaz de consola (`cli`):** `ConsoleApp` interpreta el texto escrito por el usuario (comandos como `nueva`, `estado`, `listar`, `deshacer`) y llama a métodos de `TaskManager`. Los errores de reglas (`InvalidTransitionException` y otros) se muestran como mensajes. `ConsoleMain` suscribe un `ConsoleNotifier` para ver los avisos.
+- **Interfaz gráfica (`gui`):** `GuiApp` (Swing) muestra el árbol de tareas, el detalle, los filtros y el panel de avisos. Para todo lo que modifica datos llama a los mismos métodos de `TaskManager`, y para ordenar y filtrar usa `TaskQuery`. Se suscribe al `EventPublisher` para mostrar avisos, y un temporizador revisa las fechas límite cada 30 segundos.
+
+### Estructura de paquetes del repositorio
+
+```text
+src/
+├── main/
+│   └── java/
+│       └── com/gestor/
+│           ├── core/
+│           │   ├── model/       Task, SimpleTask, CompositeTask, Project, Priority
+│           │   ├── state/       TaskState, PendingState, InProgressState, InReviewState,
+│           │   │                DoneState, TaskStatus, StateContext, InvalidTransitionException
+│           │   ├── command/     Command, CommandHistory, AddTaskCommand, RemoveTaskCommand,
+│           │   │                ChangeStatusCommand, AssignCommand, PropertyChangeCommand,
+│           │   │                AddProjectCommand
+│           │   ├── notify/      EventPublisher, TaskListener, TaskEvent, EventType,
+│           │   │                DeadlineChecker, UserInbox, ConsoleNotifier
+│           │   ├── template/    TemplateRegistry
+│           │   ├── query/       SortStrategy, PrioritySort, DueDateSort, AssigneeSort,
+│           │   │                NoSort, SortStrategies, Filters, TaskQuery
+│           │   ├── service/     TaskManager, DemoData
+│           │   └── util/        IdGenerator, Dates, Texts
+│           ├── cli/             ConsoleApp, ConsoleMain
+│           └── gui/             GuiApp, TaskTreeRenderer
+└── test/
+    └── java/
+        └── com/gestor/
+            ├── core/            StatePatternTest, CompositePatternTest, CommandPatternTest,
+            │                    ObserverPatternTest, PrototypePatternTest, StrategyPatternTest,
+            │                    TaskManagerTest, TestClock
+            └── cli/             ConsoleAppTest
+```
+
+---
+
+## 5. Pruebas y conclusiones
+
+### 5.1 Pruebas unitarias
+
+| Clase de pruebas | Qué comprueba |
+| :--- | :--- |
+| `StatePatternTest` | Transiciones válidas e inválidas; un grupo no termina con subtareas pendientes; el estado no cambia si la transición falla |
+| `CompositePatternTest` | Progreso, anidamiento, ciclos prohibidos, copia profunda independiente |
+| `CommandPatternTest` | Ejecutar, deshacer, rehacer; el historial ignora comandos fallidos; eliminar restaura la posición |
+| `ObserverPatternTest` | Varios suscriptores; un observador que falla no afecta a otros; alertas a todos los responsables sin repetirse |
+| `PrototypePatternTest` | Copias independientes, ids nuevos, estado Pendiente, fechas desplazadas, plantillas de proyecto |
+| `StrategyPatternTest` | Los tres criterios de orden, orden invertido, filtros combinados, jerarquía conservada |
+| `TaskManagerTest` | Los patrones trabajando juntos desde la fachada |
+| `ConsoleAppTest` | La consola sobre el mismo núcleo |
+
+En total son 62 pruebas. El reloj se inyecta (`TestClock`), así que las alertas se prueban sin esperas reales.
+
+### 5.2 Qué aprendimos
+- Un patrón tiene sentido cuando hay un problema real detrás. Los que más se notaron fueron Command (deshacer sale casi gratis una vez que cada acción es un objeto) y State (ya que las reglas quedaron separadas y claras).
+- Separar el núcleo de las interfaces nos ahorró trabajo: la GUI y la consola se escribieron con poco código porque la lógica ya estaba hecha.
+- Inyectar dependencias, como el reloj, hace que las pruebas sean rápidas y fiables.
+Los patrones se combinan: un cambio de estado es un Command, que usa State y publica un evento de Observer.
+
+### 5.3 Qué cambiaríamos del diseño
+- La persistencia. Hoy todo se pierde al cerrar, entonces nosotros guardaríamos proyectos, tareas y plantillas en un archivo (por ejemplo JSON) o en una base de datos.
+- Estado como enum más datos. Si los estados necesitaran información propia, habría que dejar de usar singletons.
+- El proyecto usa una CompositeTask raíz con id 0 para reutilizar el Composite. Funciona, pero es un atajo,  un diseño más limpio separaría el contenedor.
+- Cambiariamos las alertas. Cambiaríamos el polling por un planificador (ScheduledExecutorService) y guardaríamos los avisos ya enviados.
+- TaskManager demasiado grande, lo dividiríamos en servicios más pequeños (proyectos, tareas, plantillas).
+- El límite del historial. Pondríamos un máximo de acciones deshacibles.
+- Permitiríamos ordenar por varios criterios a la vez.
+- Interfaz Task más pequeña. Separar lo que solo necesitan los grupos para respetar mejor el principio de segregación de interfaces.
 
 ---
 
@@ -253,28 +359,7 @@ mvn test
 
 ---
 
-
-## 8. Conclusiones
-
-### **¿Qué se aprendió?**
-- Un patrón tiene sentido cuando hay un problema real detrás. Los que más se notaron fueron Command (deshacer sale casi gratis una vez que cada acción es un objeto) y State (ya que las reglas quedaron separadas y claras).
-- Separar el núcleo de las interfaces nos ahorró trabajo: la GUI y la consola se escribieron con poco código porque la lógica ya estaba hecha.
-- Inyectar dependencias, como el reloj, hace que las pruebas sean rápidas y fiables.
-Los patrones se combinan: un cambio de estado es un Command, que usa State y publica un evento de Observer.
-
-### **¿Qué cambiaríamos?**  
-- La persistencia. Hoy todo se pierde al cerrar, entonces nosotros guardaríamos proyectos, tareas y plantillas en un archivo (por ejemplo JSON) o en una base de datos.
-- Estado como enum más datos. Si los estados necesitaran información propia, habría que dejar de usar singletons.
-- El proyecto usa una CompositeTask raíz con id 0 para reutilizar el Composite. Funciona, pero es un atajo,  un diseño más limpio separaría el contenedor.
-- Cambiariamos las alertas. Cambiaríamos el polling por un planificador (ScheduledExecutorService) y guardaríamos los avisos ya enviados.
-- TaskManager demasiado grande, lo dividiríamos en servicios más pequeños (proyectos, tareas, plantillas).
-- El límite del historial. Pondríamos un máximo de acciones deshacibles.
-- Permitiríamos ordenar por varios criterios a la vez.
-- Interfaz Task más pequeña. Separar lo que solo necesitan los grupos para respetar mejor el principio de segregación de interfaces.
-
----
-
-## 9. Integridad Académica y Declaración de Herramientas
+## 8. Integridad Académica y Declaración de Herramientas
 
 - 
 
