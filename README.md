@@ -13,14 +13,14 @@
 ### 1.1 Alcance del sistema
 Para este proyecto vamos a construir una aplicación de escritorio en Java enfocada en organizar tareas personales o de un equipo pequeño, permitiendo usar tanto una interfaz por consola como una ventana gráfica sencilla sobre la misma lógica de negocio.
 
-**Funcionalidades que se van a implementar:**
+#### **Funcionalidades que se van a implementar:**
 - **Tareas simples y tareas compuestas:** Posibilidad de crear tareas individuales o tareas padre (proyectos/módulos) que agrupen varias subtareas.
 - **Control de estados y transiciones:** Manejo de los estados *Pendiente*, *En curso*, *En revisión* y *Terminada*, validando qué cambios de estado son válidos y cuáles no.
 - **Deshacer y rehacer acciones (Undo / Redo):** Historial en memoria para revertir o volver a aplicar acciones recientes como crear una tarea, editarla, cambiarle el estado o eliminarla.
 - **Ordenamiento y filtrado dinámico:** Opciones para listar tareas ordenadas o filtradas por prioridad, fecha límite o persona responsable.
 - **Alertas de vencimiento:** Avisos en pantalla cuando existen tareas próximas a vencer o que ya pasaron su fecha límite.
 
-**Funcionalidades que quedan por fuera (y por qué):**
+#### **Funcionalidades que quedan por fuera (y por qué):**
 - **Plantillas para proyectos recurrentes:** Se dejan por fuera para mantener el alcance realista frente al tiempo de entrega y concentrarnos en que los patrones principales queden bien implementados y con buenas pruebas unitarias.
 - **Envío de notificaciones externas (correo o SMS):** No se incluyen porque el sistema funciona de manera local en Java estándar y agregar servidores de correo complicaría la ejecución sin aportar a los patrones centrales del parcial.
 - 
@@ -29,6 +29,7 @@ Para este proyecto vamos a construir una aplicación de escritorio en Java enfoc
 
 ### 1.2. Requisitos del Sistema
 
+#### Requisitos Funcionales (RF)
 - **RF01 - [Tareas]:** El sistema debe permitir crear tareas simples y tareas compuestas (que contienen otras tareas). 
 - **RF02 - [Atributos]:** El sistema debe permitir asignar a cada tarea atributos básicos: título, descripción, responsable, fecha límite y nivel de prioridad.  
 - **RF03 - [Estados]:** El sistema debe permitir cambiar el estado de una tarea (Pendiente, En curso, En revisión, Terminada) respetando reglas lógicas (ej. no se puede pasar a "Terminada" si está "Pendiente" sin pasar por "En curso"). 
