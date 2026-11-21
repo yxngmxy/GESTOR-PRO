@@ -222,25 +222,33 @@ src/
 
 ### Ejecutar versión por Consola
 ```bash
-proyecto <nombre> | proyectos | usar <id|nombre>
-nueva <título> [grupo] [en=ID] [prioridad=ALTA] [fecha=2026-12-31] [resp=ana,luis]
-listar [orden=prioridad|fecha|responsable] [desc] [estado=..] [resp=..] [prioridad=..] [vencidas] [texto=..] [plano]
-ver <id> | estado <id> <estado> | prioridad <id> <p> | fecha <id> <f|ninguna>
-resp <id> <a,b> | renombrar <id> <título> | eliminar <id>
-deshacer | rehacer | alertas | bandeja [usuario]
-plantilla guardar <nombre> <idTarea> | plantilla guardar-proyecto <nombre>
-plantilla usar <nombre> [en=ID] [fecha=..] | plantilla usar-proyecto <plantilla> <nuevo> [fecha=..] | plantillas
-ayuda | salir
+# Con Maven
+mvn package
+java -jar target/gestor-tareas-1.0.0.jar            # agregar --demo para datos de ejemplo
+
+# Sin Maven
+./build.sh
+java -cp out com.gestor.cli.ConsoleMain --demo
 ```
 
 ### Ejecutar versión con Interfaz Gráfica (GUI)
 ```bash
-# Pegar aquí el comando para compilar y correr la ventana gráfica
+# Con Maven
+mvn package
+java -cp target/gestor-tareas-1.0.0.jar com.gestor.gui.GuiApp --demo
+
+# Sin Maven
+./build.sh
+java -cp out com.gestor.gui.GuiApp --demo
 ```
 
 ### Ejecutar Pruebas Unitarias
 ```bash
-# Pegar aquí el comando para correr las pruebas con JUnit
+# Con Maven
+mvn test
+
+# Sin Maven (indicando la ruta al jar de JUnit Console Standalone)
+./build.sh test /ruta/junit-platform-console-standalone-1.10.x.jar
 ```
 
 ---
