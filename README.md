@@ -23,7 +23,6 @@ Para este proyecto vamos a construir una aplicación de escritorio en Java enfoc
 #### **Funcionalidades que quedan por fuera (y por qué):**
 - **Plantillas para proyectos recurrentes:** Se dejan por fuera para mantener el alcance realista frente al tiempo de entrega y concentrarnos en que los patrones principales queden bien implementados y con buenas pruebas unitarias.
 - **Envío de notificaciones externas (correo o SMS):** No se incluyen porque el sistema funciona de manera local en Java estándar y agregar servidores de correo complicaría la ejecución sin aportar a los patrones centrales del parcial.
-- 
 
 ---
 
