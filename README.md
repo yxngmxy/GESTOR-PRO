@@ -44,18 +44,21 @@ Para este proyecto vamos a construir una aplicación de escritorio en Java enfoc
 - **RNF05 - [Calidad]:** Las clases críticas donde se apliquen los patrones de diseño deben contar con pruebas unitarias que garanticen su correcto funcionamiento.
 
 ---
+### 1.3 Problemas de diseño identificados
+Si programáramos este gestor de forma directa y sin aplicar patrones, nos encontraríamos con varios problemas a medida que crece el código:
 
-### 1.3. Problemas de Diseño Identificados
+1. **Manejo desigual entre tareas individuales y tareas con subtareas:**  
+   Si creamos una clase `Tarea` y otra clase aparte llamada `Proyecto` que guarda una lista de tareas, cada vez que queramos mostrar el listado, calcular el progreso o contar cuántas tareas faltan, tocaría llenar el código de `if (objeto instanceof Proyecto)` y casteos. Además, si luego queremos meter una subtarea dentro de otra subtarea, esa estructura rígida no lo permitiría fácilmente.
 
-1. **[Nombre del problema 1]:**  
-   [Descripción del problema y ejemplo concreto de por qué un diseño sin patrones volvería el código rígido o repetido]
+2. **Lógica de estados llena de condicionales (`if/else`):**  
+   Cada estado de una tarea tiene reglas distintas: una tarea *Pendiente* se puede editar y pasar a *En curso*, pero no se puede dar por *Terminada* de una vez; una tarea *Terminada* ya no debería dejarse modificar ni devolver a *Pendiente*. Si metemos todas esas validaciones dentro de un `switch` gigante en la clase `Tarea`, cualquier cambio o estado nuevo (como *Bloqueada*) obligaría a tocar toda la clase y aumentaría el riesgo de dañar lo que ya funciona.
 
-2. **[Nombre del problema 2]:**  
-   [Descripción del problema y ejemplo concreto]
+3. **Dificultad para implementar Deshacer y Rehacer:**  
+   El usuario necesita revertir cambios en las tareas. Si intentamos guardar una copia completa de toda la lista de tareas cada vez que alguien edita un título o cambia un estado, gastaríamos memoria innecesaria y además mezclaríamos la lógica de los botones/menús con el historial de cambios.
 
-3. **[Nombre del problema 3]:**  
-   [Descripción del problema y ejemplo concreto]
-
+4. **Ordenamiento y filtrado rígido:**  
+   Al principio solo ordenamos por prioridad o fecha, pero en cualquier momento puede surgir la necesidad de ordenar por responsable o filtrar por estado. Si ponemos métodos separados como `ordenarPorFecha()` y `ordenarPorPrioridad()` llenos de condicionales dentro de la clase gestora, cada criterio nuevo obligaría a modificar el núcleo del sistema.
+   
 ---
 
 ## 4. Arquitectura General
