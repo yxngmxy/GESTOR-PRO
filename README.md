@@ -218,7 +218,7 @@ src/
 
 ### Requisitos previos
 - Java JDK [17 / 21] instalado.
-- [Maven / Gradle / Compilación manual con `javac`].
+- Maven 3.8+ (opcional). También se puede compilar manualmente con javac usando ./build.sh.
 
 ### Ejecutar versión por Consola
 ```bash
