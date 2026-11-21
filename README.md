@@ -301,24 +301,6 @@ Los patrones se combinan: un cambio de estado es un Command, que usa State y pub
 ## 6. Diagramas UML
 
 ### 6.1 Diagrama de Casos de Uso
-
-
-### 6.2 Diagrama de Clases General
-
-### 6.3 Diagramas de Clases por Patrón
-#### Patrón 1 - [Nombre]
-
-
-#### Patrón 2 - [Nombre]
-
-
-#### Patrón 3 - [Nombre]
-
-
-### 6.4 Diagrama de Secuencia
-
-### 6.1 Diagrama de Casos de Uso
-
 ```mermaid
 flowchart LR
     U(["Usuario"])
@@ -353,7 +335,6 @@ flowchart LR
 ```
 
 ### 6.2 Diagrama de Clases General
-
 ```mermaid
 classDiagram
     direction LR
@@ -404,6 +385,7 @@ classDiagram
     CompositeTask o-- "*" Task : children
     Task --> TaskState
 ```
+
 
 ### 6.3 Diagramas de Clases por Patrón
 
@@ -593,8 +575,8 @@ classDiagram
     SortStrategies ..> SortStrategy
 ```
 
-### 6.4 Diagrama de Secuencia
 
+### 6.4 Diagrama de Secuencia
 Cambiar el estado de una tarea desde la GUI (la consola sigue el mismo camino a partir de `TaskManager`):
 
 ```mermaid
