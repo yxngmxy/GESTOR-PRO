@@ -260,6 +260,5 @@ Los patrones se combinan: un cambio de estado es un Command, que usa State y pub
 
 ## 9. Integridad Académica y Declaración de Herramientas
 
-- [Declarar aquí si se usaron herramientas de IA o fuentes externas, para qué se utilizaron y confirmar que todos los integrantes comprenden y pueden sustentar el proyecto]
 - 
 
