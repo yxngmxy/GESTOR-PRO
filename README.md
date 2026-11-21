@@ -286,7 +286,7 @@ En total son 62 pruebas. El reloj se inyecta (`TestClock`), así que las alertas
 - Inyectar dependencias, como el reloj, hace que las pruebas sean rápidas y fiables.
 Los patrones se combinan: un cambio de estado es un Command, que usa State y publica un evento de Observer.
 
-### 5.3 Qué cambiaríamos del diseño
+### 5.3 Qué cambiaríamos
 - La persistencia. Hoy todo se pierde al cerrar, entonces nosotros guardaríamos proyectos, tareas y plantillas en un archivo (por ejemplo JSON) o en una base de datos.
 - Estado como enum más datos. Si los estados necesitaran información propia, habría que dejar de usar singletons.
 - El proyecto usa una CompositeTask raíz con id 0 para reutilizar el Composite. Funciona, pero es un atajo,  un diseño más limpio separaría el contenedor.
