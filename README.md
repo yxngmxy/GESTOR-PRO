@@ -652,5 +652,10 @@ mvn test
 
 ## 8. Integridad Académica y Declaración de Herramientas
 
-- 
+De acuerdo con las normas de integridad académica de la asignatura, declaramos el uso de herramientas de apoyo durante la elaboración de este proyecto:
+
+- **Herramienta utilizada:** Google Gemini (Inteligencia Artificial).
+- **Para qué se usó:** Se empleó como apoyo para estructurar la plantilla en formato Markdown de este documento de diseño y para facilitar la generación de la sintaxis en código **PlantUML** utilizada al renderizar los diagramas UML.
+- **Validación del equipo:** Todo el diseño del sistema, la elección de los patrones, la implementación en Java y los ajustes finales de los diagramas fueron desarrollados, revisados y comprendidos por los integrantes del grupo, quienes están en capacidad de explicar y sustentar cada parte del trabajo.
+
 
